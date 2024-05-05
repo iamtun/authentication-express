@@ -27,6 +27,18 @@ class AccountController {
             return next(err);
         }
     }
+
+    async regenerateAccessToken(req, res, next) {
+        try {
+            const { token } = req.body;
+
+            const regeneratedAccessTokenResponse = await accountsService.regenerateAccessToken(token);
+
+            return res.status(StatusCodes.OK).json(regeneratedAccessTokenResponse);
+        } catch (err) {
+            return next(err);
+        }
+    }
 }
 
 const accountController = new AccountController();

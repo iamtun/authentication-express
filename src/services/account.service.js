@@ -1,9 +1,16 @@
 import bcrypt from 'bcrypt';
 import User from "../models/user.model.js";
-import {UserNotFoundError, PasswordNotMatchingError} from '../errors/user.error.js';
+import {
+    UserNotFoundError, PasswordNotMatchingError, RefreshTokenRevokedError, RefreshTokenNotFoundError
+} from '../errors/user.error.js';
 import {randomUUID} from 'crypto'
 import jwt from 'jsonwebtoken';
 import RefreshToken from "../models/refreshToken.model.js";
+import mongoose from "mongoose";
+import RevokedRefreshToken from "../models/revokedRefreshToken.model.js";
+
+
+const expiredTime = Number(process.env.EXPIRED_TIME || 10 * 60);
 
 class AccountService {
     async signup(firstName, lastName, dateOfBirth, gender, username, email, password) {
@@ -21,7 +28,6 @@ class AccountService {
             username
         };
 
-        const expiredTime = Number(process.env.EXPIRED_TIME || 10 * 60);
 
         const foundUser = await User.findOne(filter).exec();
 
@@ -49,7 +55,7 @@ class AccountService {
         };
 
         const refreshToken = jwt.sign(refreshTokenClaims, process.env.SALT, {
-            expiresIn: expiredTime
+            expiresIn: expiredTime * 5
         });
 
         // Persist the refresh token
@@ -74,6 +80,63 @@ class AccountService {
 
             await RefreshToken.updateOne(filter, payload).exec();
         }
+
+        return {
+            access_token: accessToken, refresh_token: refreshToken, expires_in: expiredTime
+        };
+    }
+
+    async regenerateAccessToken(refreshToken) {
+        const {payload: refreshTokenClaims} = jwt.decode(refreshToken, {complete: true});
+
+        const userId = new mongoose.Types.ObjectId(refreshTokenClaims.sub);
+
+        /*
+            * Check if refresh token is revoked or not
+            * If revoked, return HTTP 401 Unauthorized.
+        */
+        const revokedRefreshedToken = await RevokedRefreshToken.findOne({
+            userId
+        }).exec();
+
+        if (revokedRefreshedToken) {
+            throw new RefreshTokenRevokedError('Refresh token is already revoked!');
+        }
+
+        /*
+            * Check if refresh token is present or not
+            * If not present, return HTTP 401 Unauthorized.
+        */
+        const foundRefreshToken = await RefreshToken.findOne({
+            userId
+        }).exec();
+
+        if (foundRefreshToken === null) {
+            throw new RefreshTokenNotFoundError('Invalid refresh token');
+        }
+
+        /*
+            * Check if user is present or not
+            * If not present, return HTTP 404 Not found.
+        */
+        const filter = {
+            _id: userId
+        };
+
+        const foundUser = await User.findOne(filter).exec();
+
+        if (foundUser === null) {
+            throw new UserNotFoundError(`User not found!`);
+        }
+
+        const accessTokenClaims = {
+            sub: foundUser._id.toString(), jti: randomUUID(), role: foundUser.role, username: foundUser.username
+        };
+
+
+        const accessToken = jwt.sign(accessTokenClaims, process.env.SALT, {
+            expiresIn: expiredTime
+        });
 
         return {
             access_token: accessToken, refresh_token: refreshToken, expires_in: expiredTime
