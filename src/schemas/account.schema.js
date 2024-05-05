@@ -6,6 +6,11 @@ export const userSignupSchema = z.object({
     password: z.string().min(8),
     firstName: z.string(),
     lastName: z.string(),
-    dateOfBirth: z.date(),
+    dateOfBirth: z.string().date(),
     gender: z.enum(['male', 'female', 'others']),
+});
+
+export const userLoginSchema = z.object({
+    username: z.string(),
+    password: z.string().min(8),
 });
