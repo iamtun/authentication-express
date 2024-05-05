@@ -7,7 +7,7 @@ import {
     PasswordNotMatchingError,
     RefreshTokenNotFoundError,
     RefreshTokenExpiredError,
-    RefreshTokenRevokedError
+    RefreshTokenRevokedError, NoTokenProvidedError, TokenExpiredError, TokenInvalidError
 } from '../errors/user.error.js';
 
 const config = {
@@ -19,6 +19,7 @@ const UnhandledErrorMiddleware = (err, req, res, next) => {
     let error = 'Server error';
     let message = 'An error has occured, please try again later.';
     let details = [];
+    let errorCode = 'no_code';
 
     if (err instanceof UserNotFoundError) {
         statusCode = StatusCodes.NOT_FOUND;
@@ -49,8 +50,27 @@ const UnhandledErrorMiddleware = (err, req, res, next) => {
         error = 'Authentication error';
         message = err.message || 'Refresh token has already been revoked.';
     }
+    else if (err instanceof NoTokenProvidedError) {
+        errorCode = err.name;
+        statusCode = StatusCodes.BAD_REQUEST;
+        error = 'Token no provided';
+        message = err.message || 'Token no provided';
+    }
+    else if (err instanceof TokenExpiredError) {
+        errorCode = err.name;
+        statusCode = StatusCodes.UNAUTHORIZED;
+        error = 'Token expired';
+        message = err.message || 'Token expired';
+    }
+    else if (err instanceof TokenInvalidError) {
+        errorCode = err.name;
+        statusCode = StatusCodes.BAD_REQUEST;
+        error = 'Token invalid';
+        message = err.message || 'Token invalid';
+    }
 
     const errorResponse = {
+        errorCode,
         error,
         details: details.length > 0 ? details : [{message}],
         detailed: config.environment === 'development' ? err.message : undefined,

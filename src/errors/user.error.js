@@ -54,6 +54,31 @@ class RefreshTokenRevokedError extends Error {
     }
 }
 
+class NoTokenProvidedError extends Error {
+    constructor(message) {
+        super(message);
+
+        this.name = 'no_token_provided';
+    }
+}
+
+class TokenExpiredError extends Error {
+    constructor(message) {
+        super(message);
+
+        this.name = 'token_expired';
+    }
+}
+
+class TokenInvalidError extends Error {
+    constructor(message) {
+        super(message);
+
+        this.name = 'token_invalid';
+    }
+}
+
+
 export {
     UserNotFoundError,
     PasswordNotMatchingError,
@@ -61,5 +86,8 @@ export {
     DuplicateUserUsernameError,
     RefreshTokenExpiredError,
     RefreshTokenNotFoundError,
-    RefreshTokenRevokedError
+    RefreshTokenRevokedError,
+    NoTokenProvidedError,
+    TokenExpiredError,
+    TokenInvalidError
 }
