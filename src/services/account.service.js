@@ -142,6 +142,30 @@ class AccountService {
             access_token: accessToken, refresh_token: refreshToken, expires_in: expiredTime
         };
     }
+
+    async revokeRefreshToken(refreshToken) {
+        const {payload: refreshTokenClaims} = jwt.decode(refreshToken, {complete: true});
+
+        const userId = new mongoose.Types.ObjectId(refreshTokenClaims.sub);
+
+        // Persist the refresh token
+        const foundRevokedRefreshToken = await RevokedRefreshToken.findOne({
+            userId
+        }).exec();
+
+
+        if (foundRevokedRefreshToken === null) {
+            const newRefreshToken = new RevokedRefreshToken({
+                userId, token: refreshToken
+            });
+
+            await newRefreshToken.save();
+        } else {
+            foundRevokedRefreshToken.token = refreshToken;
+
+            await foundRevokedRefreshToken.save();
+        }
+    }
 }
 
 const accountsService = new AccountService();

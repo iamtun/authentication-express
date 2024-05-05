@@ -8,5 +8,5 @@ const router = Router();
 router.post('/signup', ValidateData(userSignupSchema), accountController.signup);
 router.post('/login', ValidateData(userLoginSchema), accountController.login);
 router.post('/token', ValidateData(tokenSchema), accountController.regenerateAccessToken);
-
+router.post('/revoke', ValidateData(tokenSchema), accountController.revokeRefreshToken);
 export default router;

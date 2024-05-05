@@ -39,6 +39,20 @@ class AccountController {
             return next(err);
         }
     }
+
+    async revokeRefreshToken(req, res, next) {
+        try {
+            const { token } = req.body;
+
+            await accountsService.revokeRefreshToken(token);
+
+            res.status(StatusCodes.NO_CONTENT);
+
+            return res.end();
+        } catch (err) {
+            return next(err);
+        }
+    }
 }
 
 const accountController = new AccountController();
