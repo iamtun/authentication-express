@@ -1,8 +1,8 @@
-import {z, ZodError} from 'zod';
+import {ZodError} from 'zod';
 
 import {StatusCodes} from 'http-status-codes';
 
-export const validateData = (schema) => {
+export default  (schema) => {
     return (req, res, next) => {
         try {
             schema.parse(req.body);
