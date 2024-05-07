@@ -81,6 +81,8 @@ class AccountService {
             await RefreshToken.updateOne(filter, payload).exec();
         }
 
+        await RevokedRefreshToken.findOneAndDelete({userId: foundUser._id});
+
         return {
             access_token: accessToken, refresh_token: refreshToken, expires_in: expiredTime
         };

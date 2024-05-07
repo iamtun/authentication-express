@@ -9,7 +9,7 @@ const authMiddleware = (req, res, next) => {
     const [_, token] = req.headers.authorization.split('Bearer ');
 
     if (!token)
-        throw NoTokenProvidedError('No token provided');
+        throw new NoTokenProvidedError('No token provided');
 
     try {
         const claims = jwt.verify(token, process.env.SALT);
